@@ -1,0 +1,12 @@
+---
+certManager:
+  namespace: cert-manager
+  serviceAccountName: cert-manager
+
+groupName: acme.hetzner.kadras.io
+
+imagePullSecrets:
+- name: canonical-registry-credentials
+
+podDisruptionBudget:
+  enabled: true

@@ -1,0 +1,9 @@
+apiVersion: vendir.k14s.io/v1alpha1
+directories:
+- contents:
+  - helmChart:
+      appVersion: ""
+      version: 0.6.5
+    path: cert-manager-webhook-hetzner
+  path: config/helm/upstream
+kind: LockConfig

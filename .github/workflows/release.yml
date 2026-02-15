@@ -1,0 +1,23 @@
+name: Release
+
+on:
+  - workflow_dispatch
+
+jobs:
+  release:
+    name: Release
+    permissions:
+      actions: read
+      contents: write
+      id-token: write
+      packages: write
+    uses: kadras-io/github-reusable-workflows/.github/workflows/package-release.yml@main
+    with:
+      package-name-slug: cert-manager-webhook-hetzner
+      package-name-display: cert-manager-webhook-hetzner
+      registry-server: ghcr.io
+      registry-username: ${{ github.actor }}
+      image: ${{ github.repository }}
+      version: 0.6.5
+    secrets:
+      pull-request-token: ${{ secrets.GH_ORG_PAT }}

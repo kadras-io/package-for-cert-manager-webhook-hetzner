@@ -1,0 +1,31 @@
+apiVersion: kctrl.carvel.dev/v1alpha1
+kind: PackageBuild
+metadata:
+  creationTimestamp: null
+  name: cert-manager-webhook-hetzner.packages.kadras.io
+spec:
+  template:
+    spec:
+      app:
+        spec:
+          deploy:
+          - kapp: {}
+          template:
+          - helmTemplate:
+              name: cert-manager-webhook-hetzner
+              namespace: cert-manager
+              path: config/helm/upstream/cert-manager-webhook-hetzner
+              valuesFrom:
+              - path: config/helm/values.yml
+          - ytt:
+              ignoreUnknownComments: true
+              paths:
+              - '-'
+              - config/carvel
+          - kbld: {}
+      export:
+      - imgpkgBundle:
+          image: ghcr.io/kadras-io/package-for-cert-manager-webhook-hetzner
+          useKbldImagesLock: true
+        includePaths:
+        - config

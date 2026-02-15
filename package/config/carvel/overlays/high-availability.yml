@@ -1,0 +1,28 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.subset({"kind":"Deployment", "metadata":{"name":"cert-manager-webhook-hetzner"}})
+---
+spec:
+  #@overlay/match missing_ok=True
+  replicas: #@ data.values.webhook.replicas
+
+#@ if data.values.webhook.replicas > 1:
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cert-manager-webhook-hetzner
+  namespace: cert-manager
+  labels:
+    app: cert-manager-webhook-hetzner
+    app.kubernetes.io/name: cert-manager-webhook-hetzner
+    app.kubernetes.io/instance: cert-manager-webhook-hetzner
+    app.kubernetes.io/component: "webhook"
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: cert-manager-webhook-hetzner
+      release: cert-manager-webhook-hetzner
+#@ end

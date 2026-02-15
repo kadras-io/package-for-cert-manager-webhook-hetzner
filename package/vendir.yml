@@ -1,0 +1,12 @@
+apiVersion: vendir.k14s.io/v1alpha1
+directories:
+- contents:
+  - helmChart:
+      name: cert-manager-webhook-hetzner
+      repository:
+        url: https://charts.hetzner.cloud
+      version: 0.6.5
+    path: cert-manager-webhook-hetzner
+  path: config/helm/upstream
+kind: Config
+minimumRequiredVersion: 0.32.0
