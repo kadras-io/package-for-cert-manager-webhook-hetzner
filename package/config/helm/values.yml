@@ -7,6 +7,3 @@ groupName: acme.hetzner.kadras.io
 
 imagePullSecrets:
 - name: canonical-registry-credentials
-
-podDisruptionBudget:
-  enabled: true
