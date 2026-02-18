@@ -102,6 +102,7 @@ The cert-manager-webhook-hetzner package has the following configurable properti
 | Config | Default | Description |
 |-------|-------------------|-------------|
 | `webhook.replicas` | `1` | The number of replicas. In order to enable high availability, at least 3 replicas are recommended. |
+| `prometheus.enabled` | `true` | Whether to enable Prometheus annotations for automatic scraping of cert-manager-webhook-hetzner metrics. |
 
 </details>
 

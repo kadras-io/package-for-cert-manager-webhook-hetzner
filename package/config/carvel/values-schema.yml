@@ -7,3 +7,8 @@ webhook:
   #@schema/desc "The number of replicas. In order to enable high availability, at least 3 replicas are recommended."
   #@schema/validation min=1
   replicas: 1
+
+#@schema/desc "Settings for Prometheus metrics."
+prometheus:
+  #@schema/desc "Whether to enable Prometheus annotations for automatic scraping of cert-manager-webhook-hetzner metrics."
+  enabled: true

@@ -1,5 +1,7 @@
+#@ load("@ytt:data", "data")
 #@ load("@ytt:overlay", "overlay")
 
+#@ if data.values.prometheus.enabled:
 #@overlay/match by=overlay.subset({"kind":"Deployment","metadata":{"name":"cert-manager-webhook-hetzner"}})
 ---
 spec:
@@ -11,3 +13,4 @@ spec:
         prometheus.io/scheme: "http"
         prometheus.io/port: "metrics"
         prometheus.io/path: "/metrics"
+#@ end
