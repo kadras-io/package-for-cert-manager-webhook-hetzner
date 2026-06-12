@@ -6,7 +6,7 @@ directories:
       repository:
         # https://github.com/hetzner/cert-manager-webhook-hetzner
         url: https://charts.hetzner.cloud
-      version: 0.6.7
+      version: 0.7.0
     path: cert-manager-webhook-hetzner
   path: config/helm/upstream
 kind: Config
