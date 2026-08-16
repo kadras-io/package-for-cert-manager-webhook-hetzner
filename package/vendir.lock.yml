@@ -3,7 +3,7 @@ directories:
 - contents:
   - helmChart:
       appVersion: ""
-      version: 0.6.7
+      version: 0.8.1
     path: cert-manager-webhook-hetzner
   path: config/helm/upstream
 kind: LockConfig

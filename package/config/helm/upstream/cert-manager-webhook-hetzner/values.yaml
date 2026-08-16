@@ -26,7 +26,7 @@ image:
   repository: docker.io/hetzner/cert-manager-webhook-hetzner
   # -- Tag of the webhook image.
   # @default -- Current version
-  tag: v0.6.7 # x-releaser-pleaser-version
+  tag: v0.8.1 # x-releaser-pleaser-version
   # -- Pull policy of the webhook image.
   pullPolicy: IfNotPresent
 
@@ -50,8 +50,7 @@ metrics:
 replicaCount: 1
 
 # -- [Kubernetes resource management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for the webhook
-resources:
-  {}
+resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -97,6 +96,12 @@ labels: {}
 # -- [Kubernetes annotations](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/) added to the deployment metadata
 annotations: {}
 
+# -- Additional [volumes](https://kubernetes.io/docs/concepts/storage/volumes/) to add to the pod.
+extraVolumes: []
+
+# -- Additional volume mounts to add to the container.
+extraVolumeMounts: []
+
 # -- [Kubernetes labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) added to the pod metadata
 podLabels: {}
 
@@ -109,3 +114,6 @@ podDisruptionBudget:
   # minAvailable: 1
   # maxUnavailable: 1
   # unhealthyPodEvictionPolicy: IfHealthyBudget
+
+# -- PriorityClassName of the application pods
+priorityClassName: ""
