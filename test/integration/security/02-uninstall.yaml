@@ -3,5 +3,10 @@
 # `kctrl dev --delete` doesn't delete the resources of a local installation.
 apiVersion: kuttl.dev/v1beta1
 kind: TestStep
+delete:
+  - apiVersion: v1
+    kind: Secret
+    name: hetzner
+    namespace: cert-manager
 commands:
   - script: kapp delete -a cert-manager-webhook-hetzner.app -n tests -y

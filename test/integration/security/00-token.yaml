@@ -1,0 +1,10 @@
+# The Secret with the Hetzner Cloud API token, mounted into the webhook.
+# Applied by kuttl, since `kctrl dev` only deploys the package resources.
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hetzner
+  namespace: cert-manager
+stringData:
+  api-token: my-api-token

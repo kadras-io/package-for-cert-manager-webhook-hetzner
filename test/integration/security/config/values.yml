@@ -12,12 +12,3 @@ stringData:
     security:
       secrets_access: none
       network_policies: true
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: hetzner
-  namespace: cert-manager
-stringData:
-  api-token: my-api-token
