@@ -1,0 +1,23 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+#@ load("/lib/webhook_hetzner.star", "name")
+
+#! The webhook makes requests outside the cluster to the Hetzner DNS API.
+
+#@ proxy = data.values.proxy
+#@ env = [{"name": name, "value": value} for name, value in [("HTTP_PROXY", proxy.http_proxy), ("HTTPS_PROXY", proxy.https_proxy), ("NO_PROXY", proxy.no_proxy)] if value]
+
+#@ if env:
+#@overlay/match by=overlay.subset({"kind":"Deployment", "metadata":{"name":name}})
+---
+spec:
+  template:
+    spec:
+      containers:
+        #@overlay/match by="name"
+        - name: #@ name
+          env:
+          #@ for var in env:
+          - #@ var
+          #@ end
+#@ end

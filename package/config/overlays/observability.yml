@@ -1,0 +1,30 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+#@ load("/lib/webhook_hetzner.star", "metrics_port", "name")
+
+#! The webhook writes logs in the text format, at the level set via the `LOG_LEVEL` environment variable.
+#! It exposes metrics in the Prometheus format on port 8080 (`/metrics`).
+
+#@ observability = data.values.observability
+
+#@overlay/match by=overlay.subset({"kind":"Deployment", "metadata":{"name":name}})
+---
+spec:
+  template:
+    #@ if/end observability.metrics.enabled:
+    metadata:
+      #@overlay/match missing_ok=True
+      annotations:
+        #@overlay/match missing_ok=True
+        prometheus.io/scrape: "true"
+        #@overlay/match missing_ok=True
+        prometheus.io/port: #@ str(metrics_port)
+        #@overlay/match missing_ok=True
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        #@overlay/match by="name"
+        - name: #@ name
+          env:
+            - name: LOG_LEVEL
+              value: #@ observability.logging.level

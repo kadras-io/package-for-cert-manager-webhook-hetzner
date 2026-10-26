@@ -1,0 +1,8 @@
+---
+# Values for rendering the upstream Helm chart into config/upstream (see `task vendor`).
+# They only cover what's fixed for the package: what users can configure
+# is in config/values-schema.yml and applied via ytt overlays on the rendered manifests.
+
+# The API group served by the webhook, referenced by the cert-manager package
+# when using the `hetzner` DNS-01 provider.
+groupName: acme.hetzner.kadras.io

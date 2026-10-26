@@ -1,14 +1,23 @@
-# Configuring Observability
+# Observability
 
-Monitor and observe the operation of cert-manager-webhook-hetzner using metrics.
+## Logs
+
+The webhook writes logs in the text format. Set the log level to `debug` to troubleshoot the challenges, or to `warn` or `error` to reduce the volume.
+
+```yaml
+observability:
+  logging:
+    level: debug
+```
 
 ## Metrics
 
-Metrics configuration for the cert-manager-webhook-hetzner deployment is enabled by default using the Prometheus format. This package comes pre-configured with the necessary annotations to let Prometheus scrape metrics automatically from all its components.
-
-If you'd like to remove the Prometheus annotations and therefore disable automatic scraping of cert-manager metrics, you can apply the following configuration:
+The webhook exposes metrics in the Prometheus format on port 8080 (`/metrics`), including the requests to the Hetzner Cloud API. Its Pods are annotated for Prometheus scraping. To remove the annotations:
 
 ```yaml
-prometheus:
-  enabled: false
+observability:
+  metrics:
+    enabled: false
 ```
+
+The `cert-manager-webhook-hetzner` Service exposes the metrics too, on the `metrics` port, for a Prometheus Operator ServiceMonitor.

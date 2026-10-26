@@ -1,0 +1,6 @@
+---
+token:
+  secret: hetzner
+  key: api-token
+security:
+  secrets_access: none

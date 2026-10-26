@@ -1,0 +1,47 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+#@ load("/lib/webhook_hetzner.star", "name", "upstream_namespace")
+
+#! The webhook runs in the namespace of cert-manager, which is also the namespace of the cert-manager ServiceAccount
+#! allowed to call the webhook. The upstream Helm chart is rendered with the default namespace of cert-manager,
+#! replaced here with the package namespace.
+
+#@ namespace = data.values.namespace
+
+#@overlay/match by=overlay.subset({"metadata":{"namespace":upstream_namespace}}), expects="7+"
+---
+metadata:
+  namespace: #@ namespace
+
+#! The RoleBinding in `kube-system` lets the webhook read the configuration for authenticating the API server.
+#@ cluster_role_binding = overlay.subset({"kind":"ClusterRoleBinding"})
+#@ role_binding = overlay.subset({"kind":"RoleBinding"})
+
+#@overlay/match by=overlay.or_op(cluster_role_binding, role_binding), expects="4+"
+---
+subjects:
+#@overlay/match by=overlay.subset({"kind":"ServiceAccount"})
+- namespace: #@ namespace
+
+#@overlay/match by=overlay.subset({"kind":"APIService"})
+---
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: #@ namespace + "/" + name + "-webhook-tls"
+spec:
+  service:
+    namespace: #@ namespace
+
+#@overlay/match by=overlay.subset({"kind":"Certificate", "metadata":{"name":name + "-ca"}})
+---
+spec:
+  commonName: #@ "ca." + name + "." + namespace
+
+#@overlay/match by=overlay.subset({"kind":"Certificate", "metadata":{"name":name + "-webhook-tls"}})
+---
+spec:
+  #@overlay/replace
+  dnsNames:
+  - #@ name
+  - #@ name + "." + namespace
+  - #@ name + "." + namespace + ".svc"

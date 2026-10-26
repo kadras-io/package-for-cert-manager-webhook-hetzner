@@ -1,0 +1,4 @@
+---
+security:
+  secrets_access: namespace
+  network_policies: true

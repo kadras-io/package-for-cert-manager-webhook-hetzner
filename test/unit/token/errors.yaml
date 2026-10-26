@@ -1,0 +1,18 @@
+# The Issuers use `tokenFilePath`, so the webhook doesn't read Secrets.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cert-manager-webhook-hetzner:read-secrets
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager-webhook-hetzner:read-secrets
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cert-manager-webhook-hetzner:read-secrets

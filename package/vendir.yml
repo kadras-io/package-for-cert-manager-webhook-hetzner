@@ -7,6 +7,6 @@ directories:
         url: https://charts.hetzner.cloud
       version: 0.9.1
     path: cert-manager-webhook-hetzner
-  path: config/helm/upstream
+  path: helm/upstream
 kind: Config
 minimumRequiredVersion: 0.32.0

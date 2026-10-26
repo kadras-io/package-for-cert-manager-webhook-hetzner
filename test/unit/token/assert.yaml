@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager-webhook-hetzner
+  namespace: cert-manager
+spec:
+  template:
+    spec:
+      (volumes[?name == 'hetzner-token'] | [0].secret):
+        secretName: hetzner
+        defaultMode: 0444
+        items:
+        - key: api-token
+          path: token
+      (containers[?name == 'cert-manager-webhook-hetzner'] | [0]):
+        (volumeMounts[?name == 'hetzner-token'] | [0]):
+          mountPath: /var/run/secrets/hetzner
+          readOnly: true

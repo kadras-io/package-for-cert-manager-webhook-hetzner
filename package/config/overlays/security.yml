@@ -1,0 +1,163 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+#@ load("/lib/webhook_hetzner.star", "https_port", "metrics_port", "name", "selector")
+
+#! =============================================
+#! Pod Security Standards
+#! =============================================
+
+#! The upstream Helm chart complies with the "restricted" Pod Security Standard, enforced on the namespace
+#! by the cert-manager package. The root filesystem is also made read-only, since the webhook doesn't write to it.
+#! See: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+
+#@overlay/match by=overlay.subset({"kind":"Deployment", "metadata":{"name":name}})
+---
+spec:
+  template:
+    spec:
+      containers:
+        #@overlay/match by="name"
+        - name: #@ name
+          securityContext:
+            #@overlay/match missing_ok=True
+            readOnlyRootFilesystem: true
+
+#! =============================================
+#! Service Account Tokens
+#! =============================================
+
+#! The service account token isn't auto-mounted. Instead, the container mounts a projected token
+#! with a short expiration, which the kubelet rotates.
+
+#@overlay/match by=overlay.subset({"kind":"ServiceAccount", "metadata":{"name":name}})
+---
+#@overlay/match missing_ok=True
+automountServiceAccountToken: false
+
+#@overlay/match by=overlay.subset({"kind":"Deployment", "metadata":{"name":name}})
+---
+spec:
+  template:
+    spec:
+      #@overlay/match missing_ok=True
+      automountServiceAccountToken: false
+      containers:
+        #@overlay/match by="name"
+        - name: #@ name
+          volumeMounts:
+            - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              name: serviceaccount-token
+              readOnly: true
+      volumes:
+        - name: serviceaccount-token
+          projected:
+            defaultMode: 0444
+            sources:
+            - serviceAccountToken:
+                expirationSeconds: 3607
+                path: token
+            - configMap:
+                name: kube-root-ca.crt
+                items:
+                - key: ca.crt
+                  path: ca.crt
+            - downwardAPI:
+                items:
+                - path: namespace
+                  fieldRef:
+                    apiVersion: v1
+                    fieldPath: metadata.namespace
+
+#! =============================================
+#! Secrets Access
+#! =============================================
+
+#! The webhook gets the Secret referenced by an Issuer via `tokenSecretKeyRef` from the namespace of the Issuer,
+#! or from the cluster resource namespace (the package namespace) for a ClusterIssuer. It doesn't list or watch Secrets,
+#! so `get` is the only verb granted. Upstream grants it on all the namespaces, which `security.secrets_access`
+#! can restrict to the package namespace, or remove when all Issuers use `tokenFilePath` (see token.yml).
+
+#@ secrets_access = data.values.security.secrets_access
+#@ read_secrets = name + ":read-secrets"
+
+#@overlay/match by=overlay.subset({"kind":"ClusterRole", "metadata":{"name":read_secrets}})
+---
+rules:
+#@overlay/match by=overlay.subset({"resources":["secrets"]})
+-
+  #@overlay/replace
+  verbs:
+  - get
+
+#@ if secrets_access != "cluster":
+#@ cluster_role = overlay.subset({"kind":"ClusterRole", "metadata":{"name":read_secrets}})
+#@ cluster_role_binding = overlay.subset({"kind":"ClusterRoleBinding", "metadata":{"name":read_secrets}})
+
+#@overlay/match by=overlay.or_op(cluster_role, cluster_role_binding), expects=2
+#@overlay/remove
+---
+#@ end
+
+#@ if secrets_access == "namespace":
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: #@ read_secrets
+  namespace: #@ data.values.namespace
+  labels: #@ selector()
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: #@ read_secrets
+  namespace: #@ data.values.namespace
+  labels: #@ selector()
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: #@ read_secrets
+subjects:
+- kind: ServiceAccount
+  name: #@ name
+  namespace: #@ data.values.namespace
+#@ end
+
+#! =============================================
+#! Network Policies
+#! =============================================
+
+#! Deny the inbound traffic to the webhook Pods, except for the requests from the Kubernetes API server,
+#! which forwards the DNS-01 challenges sent by cert-manager, and the metrics scraping. The source of both
+#! isn't known in advance, so they're allowed from anywhere: restrict them with a ytt overlay.
+#! The traffic from the kubelet, like health probes, is always allowed. The outbound traffic isn't restricted,
+#! since the webhook reaches the Hetzner DNS API. The namespace is shared with cert-manager,
+#! so the policy only selects the webhook Pods.
+
+#@ if data.values.security.network_policies:
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: #@ name
+  namespace: #@ data.values.namespace
+spec:
+  podSelector:
+    matchLabels: #@ selector()
+  policyTypes:
+  - Ingress
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: #@ https_port
+    - protocol: TCP
+      port: #@ metrics_port
+#@ end

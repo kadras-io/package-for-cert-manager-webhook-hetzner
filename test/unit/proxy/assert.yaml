@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager-webhook-hetzner
+  namespace: cert-manager
+spec:
+  template:
+    spec:
+      (containers[?name == 'cert-manager-webhook-hetzner'] | [0]):
+        (env[?name == 'HTTPS_PROXY'] | [0].value): http://proxy.kadras.io:3128
+        (env[?name == 'NO_PROXY'] | [0].value): .svc,.cluster.local
+        (env[?name == 'HTTP_PROXY'] | length(@)): 0
+        # The upstream variables are kept.
+        (env[?name == 'GROUP_NAME'] | length(@)): 1
+        (env[?name == 'LOG_LEVEL'] | length(@)): 1

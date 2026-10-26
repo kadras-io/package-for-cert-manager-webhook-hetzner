@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager-webhook-hetzner
+  namespace: certificates
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cert-manager-webhook-hetzner
+  namespace: certificates
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cert-manager-webhook-hetzner
+  namespace: certificates
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cert-manager-webhook-hetzner-registry-credentials
+  namespace: certificates
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1alpha1.acme.hetzner.kadras.io
+  annotations:
+    cert-manager.io/inject-ca-from: certificates/cert-manager-webhook-hetzner-webhook-tls
+spec:
+  service:
+    name: cert-manager-webhook-hetzner
+    namespace: certificates
+---
+# The cert-manager ServiceAccount is in the same namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager-webhook-hetzner:domain-solver
+subjects:
+- kind: ServiceAccount
+  name: cert-manager
+  namespace: certificates
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager-webhook-hetzner:auth-delegator
+subjects:
+- kind: ServiceAccount
+  name: cert-manager-webhook-hetzner
+  namespace: certificates
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager-webhook-hetzner:read-secrets
+subjects:
+- kind: ServiceAccount
+  name: cert-manager-webhook-hetzner
+  namespace: certificates
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cert-manager-webhook-hetzner:webhook-authentication-reader
+  namespace: kube-system
+subjects:
+- kind: ServiceAccount
+  name: cert-manager-webhook-hetzner
+  namespace: certificates
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: cert-manager-webhook-hetzner-selfsign
+  namespace: certificates
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: cert-manager-webhook-hetzner-ca
+  namespace: certificates
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cert-manager-webhook-hetzner-ca
+  namespace: certificates
+spec:
+  commonName: ca.cert-manager-webhook-hetzner.certificates
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cert-manager-webhook-hetzner-webhook-tls
+  namespace: certificates
+spec:
+  dnsNames:
+  - cert-manager-webhook-hetzner
+  - cert-manager-webhook-hetzner.certificates
+  - cert-manager-webhook-hetzner.certificates.svc

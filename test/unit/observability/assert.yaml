@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager-webhook-hetzner
+  namespace: cert-manager
+spec:
+  template:
+    spec:
+      (containers[?name == 'cert-manager-webhook-hetzner'] | [0]):
+        (env[?name == 'LOG_LEVEL'] | [0].value): debug

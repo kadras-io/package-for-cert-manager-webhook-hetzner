@@ -1,0 +1,29 @@
+# The webhook is ready.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager-webhook-hetzner
+  namespace: cert-manager
+spec:
+  replicas: 1
+status:
+  readyReplicas: 1
+# The Kubernetes API server reaches the webhook over TLS, with the certificate issued by cert-manager,
+# so that cert-manager can send it the DNS-01 challenges.
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1alpha1.acme.hetzner.kadras.io
+status:
+  conditions:
+  - type: Available
+    status: "True"
+# Only the webhook Pods are selected, so cert-manager isn't affected.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cert-manager-webhook-hetzner
+  namespace: cert-manager

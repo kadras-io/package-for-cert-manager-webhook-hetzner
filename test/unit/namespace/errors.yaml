@@ -1,0 +1,30 @@
+# Nothing is left in the default namespace.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: cert-manager
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: cert-manager
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: cert-manager
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: cert-manager
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  namespace: cert-manager
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  namespace: cert-manager

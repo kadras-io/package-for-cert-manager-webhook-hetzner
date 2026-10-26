@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cert-manager-webhook-hetzner
+  namespace: cert-manager
+spec:
+  # The namespace is shared with cert-manager, so only the webhook Pods are selected.
+  podSelector:
+    matchLabels:
+      app: cert-manager-webhook-hetzner
+      release: cert-manager-webhook-hetzner
+  policyTypes:
+  - Ingress
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 8443
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cert-manager-webhook-hetzner:read-secrets
+  namespace: cert-manager
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cert-manager-webhook-hetzner:read-secrets
+  namespace: cert-manager
+roleRef:
+  kind: Role
+  name: cert-manager-webhook-hetzner:read-secrets
+subjects:
+- kind: ServiceAccount
+  name: cert-manager-webhook-hetzner
+  namespace: cert-manager

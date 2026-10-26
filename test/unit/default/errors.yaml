@@ -1,0 +1,19 @@
+# A single replica, so no PodDisruptionBudget.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+---
+# Network policies are disabled.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+---
+# The Secrets are read in all the namespaces, via the ClusterRole.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+---
+# The namespace is owned by the cert-manager package.
+apiVersion: v1
+kind: Namespace
+---
+# The ServiceMonitor CRD isn't required.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor

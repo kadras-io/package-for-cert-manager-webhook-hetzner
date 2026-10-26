@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cert-manager-webhook-hetzner-values
+  namespace: tests
+stringData:
+  values.yaml: |
+    token:
+      secret: hetzner
+      key: api-token
+    security:
+      secrets_access: none
+      network_policies: true
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hetzner
+  namespace: cert-manager
+stringData:
+  api-token: my-api-token

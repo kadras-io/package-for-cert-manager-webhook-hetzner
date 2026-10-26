@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager-webhook-hetzner
+  namespace: cert-manager
+spec:
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: /metrics
+    spec:
+      serviceAccountName: cert-manager-webhook-hetzner
+      priorityClassName: system-cluster-critical
+      automountServiceAccountToken: false
+      (topologySpreadConstraints == null): true
+      imagePullSecrets:
+      - name: cert-manager-webhook-hetzner-registry-credentials
+      (volumes[?name == 'hetzner-token'] | length(@)): 0
+      (volumes[?name == 'serviceaccount-token'] | [0].projected.sources[0].serviceAccountToken.expirationSeconds): 3607
+      (containers[?name == 'cert-manager-webhook-hetzner'] | [0]):
+        (starts_with(image, 'docker.io/hetzner/cert-manager-webhook-hetzner:v')): true
+        (env[?name == 'GROUP_NAME'] | [0].value): acme.hetzner.kadras.io
+        (env[?name == 'LOG_LEVEL'] | [0].value): info
+        (env[?name == 'HTTPS_PROXY'] | length(@)): 0
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+        (volumeMounts[?name == 'serviceaccount-token'] | [0].mountPath): /var/run/secrets/kubernetes.io/serviceaccount
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cert-manager-webhook-hetzner
+  namespace: cert-manager
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cert-manager-webhook-hetzner-registry-credentials
+  namespace: cert-manager
+  annotations:
+    secretgen.carvel.dev/image-pull-secret: ""
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1alpha1.acme.hetzner.kadras.io
+  annotations:
+    cert-manager.io/inject-ca-from: cert-manager/cert-manager-webhook-hetzner-webhook-tls
+spec:
+  group: acme.hetzner.kadras.io
+  service:
+    name: cert-manager-webhook-hetzner
+    namespace: cert-manager
+---
+# cert-manager sends the DNS-01 challenges to the webhook.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager-webhook-hetzner:domain-solver
+subjects:
+- kind: ServiceAccount
+  name: cert-manager
+  namespace: cert-manager
+---
+# The webhook only gets the Secrets referenced by the Issuers, in any namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cert-manager-webhook-hetzner:read-secrets
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager-webhook-hetzner:read-secrets
+subjects:
+- kind: ServiceAccount
+  name: cert-manager-webhook-hetzner
+  namespace: cert-manager
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cert-manager-webhook-hetzner-webhook-tls
+  namespace: cert-manager
+spec:
+  dnsNames:
+  - cert-manager-webhook-hetzner
+  - cert-manager-webhook-hetzner.cert-manager
+  - cert-manager-webhook-hetzner.cert-manager.svc

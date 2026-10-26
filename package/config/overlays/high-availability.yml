@@ -1,0 +1,53 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+#@ load("/lib/webhook_hetzner.star", "name", "selector")
+
+#! The webhook is active/active: all replicas serve the requests from the Kubernetes API server.
+#!
+#! With more than one replica, a PodDisruptionBudget keeps at least one available during voluntary disruptions,
+#! and the replicas are spread across nodes on a best-effort basis, so that single-node clusters keep working.
+#!
+#! The webhook runs with the `system-cluster-critical` priority: when its APIService is unavailable,
+#! the API discovery fails, which blocks the deletion of namespaces and the garbage collection in the cluster.
+#! It sets small resource requests and no limits. Tune them with a ytt overlay.
+
+#@ replicas = data.values.webhook.replicas
+
+#@overlay/match by=overlay.subset({"kind":"Deployment", "metadata":{"name":name}})
+---
+spec:
+  replicas: #@ replicas
+  template:
+    spec:
+      #@overlay/match missing_ok=True
+      priorityClassName: system-cluster-critical
+      #@ if/end replicas > 1:
+      #@overlay/match missing_ok=True
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels: #@ selector()
+      containers:
+        #@overlay/match by="name"
+        - name: #@ name
+          #@overlay/replace
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+
+#@ if replicas > 1:
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: #@ name
+  namespace: #@ data.values.namespace
+  labels: #@ selector()
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels: #@ selector()
+#@ end

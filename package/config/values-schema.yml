@@ -1,0 +1,68 @@
+#@ load("/lib/validation.star", "is_dns_label")
+
+#@data/values-schema
+---
+
+#@schema/desc "The namespace where cert-manager is installed. The webhook is deployed there too, and it allows the cert-manager ServiceAccount there to send it the DNS-01 challenges. The namespace isn't created by the package."
+#@schema/validation ("a valid DNS label", is_dns_label)
+namespace: cert-manager
+
+#! =============================================
+#! Webhook
+#! =============================================
+
+#@schema/desc "Settings for the webhook, which solves the ACME DNS-01 challenges for cert-manager by creating TXT records via the Hetzner Cloud API."
+webhook:
+  #@schema/desc "The number of webhook replicas. All replicas serve the requests from the Kubernetes API server: 2 are recommended for production. With more than 1 replica, a PodDisruptionBudget is created."
+  #@schema/validation min=1
+  replicas: 1
+
+#@schema/desc "A Secret with the Hetzner Cloud API token, mounted into the webhook at `/var/run/secrets/hetzner/token`, so that Issuers can reference it via `tokenFilePath` instead of `tokenSecretKeyRef`. Optional."
+token:
+  #@schema/desc "The name of the Secret, in the package namespace."
+  #@schema/validation ("a valid DNS label", lambda v: v == "" or is_dns_label(v))
+  secret: ""
+  #@schema/desc "The key in the Secret holding the token."
+  #@schema/validation min_len=1
+  key: token
+
+#! =============================================
+#! Observability
+#! =============================================
+
+#@schema/desc "Settings for observing the webhook."
+observability:
+  #@schema/desc "Settings for the logs, written in the text format."
+  logging:
+    #@schema/desc "The log level."
+    #@schema/validation one_of=["debug", "info", "warn", "error"]
+    level: info
+  #@schema/desc "Settings for the metrics."
+  metrics:
+    #@schema/desc "Whether to annotate the Pods for Prometheus scraping. The webhook exposes metrics on port 8080."
+    enabled: true
+
+#! =============================================
+#! Security
+#! =============================================
+
+#@schema/desc "Settings for hardening the webhook."
+security:
+  #@schema/desc "Where the webhook can read the Secrets referenced by Issuers via `tokenSecretKeyRef`: `cluster` for Issuers in any namespace; `namespace` for ClusterIssuers and the Issuers in the package namespace only, which is enough for the Let's Encrypt ClusterIssuer of the cert-manager package; `none` when all Issuers use `tokenFilePath`."
+  #@schema/validation one_of=["cluster", "namespace", "none"]
+  secrets_access: cluster
+  #@schema/desc "Whether to deny the inbound traffic to the webhook Pods, except for the requests from the Kubernetes API server and the metrics scraping. Enable it when the cert-manager package has `security.network_policies` enabled, since that denies all the inbound traffic in its namespace."
+  network_policies: false
+
+#! =============================================
+#! Proxy
+#! =============================================
+
+#@schema/desc "Settings for the corporate proxy used by the webhook to reach the Hetzner Cloud API."
+proxy:
+  #@schema/desc "The proxy for HTTP traffic."
+  http_proxy: ""
+  #@schema/desc "The proxy for HTTPS traffic."
+  https_proxy: ""
+  #@schema/desc "A comma-separated list of hostnames, IP addresses, or IP ranges in CIDR format that should not use the proxy. It should include the address of the Kubernetes API server."
+  no_proxy: ""

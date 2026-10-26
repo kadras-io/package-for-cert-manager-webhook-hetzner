@@ -3,6 +3,8 @@ kind: PackageBuild
 metadata:
   name: cert-manager-webhook-hetzner.packages.kadras.io
 spec:
+  release:
+  - resource: {}
   template:
     spec:
       app:
@@ -10,17 +12,9 @@ spec:
           deploy:
           - kapp: {}
           template:
-          - helmTemplate:
-              name: cert-manager-webhook-hetzner
-              namespace: cert-manager
-              path: config/helm/upstream/cert-manager-webhook-hetzner
-              valuesFrom:
-              - path: config/helm/values.yml
           - ytt:
-              ignoreUnknownComments: true
               paths:
-              - '-'
-              - config/carvel
+              - config
           - kbld: {}
       export:
       - imgpkgBundle:

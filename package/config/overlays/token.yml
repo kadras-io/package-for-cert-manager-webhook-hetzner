@@ -1,0 +1,33 @@
+#@ load("@ytt:data", "data")
+#@ load("@ytt:overlay", "overlay")
+#@ load("/lib/webhook_hetzner.star", "name", "token_directory")
+
+#! The webhook reads the Hetzner Cloud API token from the Secret referenced by each Issuer via `tokenSecretKeyRef`,
+#! or from a file via `tokenFilePath`. This mounts a token as a file, so that Issuers don't need Secrets of their own
+#! and the webhook doesn't need to read Secrets at all (see `security.secrets_access`).
+#! See: https://github.com/hetzner/cert-manager-webhook-hetzner/blob/main/docs/reference/issuer-configuration.md
+
+#@ token = data.values.token
+
+#@ if token.secret:
+#@overlay/match by=overlay.subset({"kind":"Deployment", "metadata":{"name":name}})
+---
+spec:
+  template:
+    spec:
+      containers:
+        #@overlay/match by="name"
+        - name: #@ name
+          volumeMounts:
+            - name: hetzner-token
+              mountPath: #@ token_directory
+              readOnly: true
+      volumes:
+        - name: hetzner-token
+          secret:
+            secretName: #@ token.secret
+            defaultMode: 0444
+            items:
+            - key: #@ token.key
+              path: token
+#@ end

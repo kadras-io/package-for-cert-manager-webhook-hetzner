@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cert-manager-webhook-hetzner-values
+  namespace: tests
+stringData:
+  values.yaml: |
+    webhook:
+      replicas: 2

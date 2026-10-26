@@ -5,5 +5,5 @@ directories:
       appVersion: ""
       version: 0.9.1
     path: cert-manager-webhook-hetzner
-  path: config/helm/upstream
+  path: helm/upstream
 kind: LockConfig
