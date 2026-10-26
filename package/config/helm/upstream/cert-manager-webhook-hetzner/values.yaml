@@ -26,7 +26,7 @@ image:
   repository: docker.io/hetzner/cert-manager-webhook-hetzner
   # -- Tag of the webhook image.
   # @default -- Current version
-  tag: v0.8.1 # x-releaser-pleaser-version
+  tag: v0.9.1 # x-releaser-pleaser-version
   # -- Pull policy of the webhook image.
   pullPolicy: IfNotPresent
 
@@ -48,6 +48,33 @@ metrics:
 
 # -- Number of replicas.
 replicaCount: 1
+
+# -- [Kubernetes startup probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
+# Set to `null` to disable the startup probe.
+# @default -- See [values.yaml](values.yaml)
+startupProbe:
+  httpGet:
+    scheme: HTTPS
+    path: /healthz
+    port: https
+
+# -- [Kubernetes liveness probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
+# Set to `null` to disable the liveness probe.
+# @default -- See [values.yaml](values.yaml)
+livenessProbe:
+  httpGet:
+    scheme: HTTPS
+    path: /healthz
+    port: https
+
+# -- [Kubernetes readiness probe](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
+# Set to `null` to disable the readiness probe.
+# @default -- See [values.yaml](values.yaml)
+readinessProbe:
+  httpGet:
+    scheme: HTTPS
+    path: /healthz
+    port: https
 
 # -- [Kubernetes resource management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for the webhook
 resources: {}
